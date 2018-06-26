@@ -1,6 +1,11 @@
 spring:
   profiles:
     active: ${apollo_profile}
+  datasource:
+    url: jdbc:mysql://192.168.37.85:3306/ApolloConfigDB?characterEncoding=utf8
+    username: root
+    password: root
 
 logging:
   file: /opt/logs/100003171/apollo-assembly.log
+  level: debug

@@ -3,7 +3,10 @@ spring:
     name: apollo-configservice
   profiles:
     active: ${apollo_profile}
-
+  datasource:
+    url: jdbc:mysql://192.168.37.85:3306/ApolloConfigDB?characterEncoding=utf8
+    username: root
+    password: root
 ctrip:
   appid: 100003171
   
