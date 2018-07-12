@@ -4,12 +4,10 @@ import com.ctrip.framework.apollo.demo.spring.springBootDemo.config.SampleRedisC
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
-
 import com.ctrip.framework.apollo.demo.spring.common.bean.AnnotatedBean;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;

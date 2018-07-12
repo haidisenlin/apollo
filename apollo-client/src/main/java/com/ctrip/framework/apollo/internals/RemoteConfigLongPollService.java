@@ -165,7 +165,7 @@ public class RemoteConfigLongPollService {
         request.setReadTimeout(LONG_POLLING_READ_TIMEOUT);
 
         transaction.addData("Url", url);
-
+        //http长连接。等待修改后的调用
         final HttpResponse<List<ApolloConfigNotification>> response =
             m_httpUtil.doGet(request, m_responseType);
 
