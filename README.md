@@ -105,7 +105,9 @@ Java客户端不依赖任何框架，能够运行于所有Java运行时环境，
 # Contribution
   * Source Code: https://github.com/ctripcorp/apollo
   * Issue Tracker: https://github.com/ctripcorp/apollo/issues
-
+# debug 
+   在apollo-assembly 的commandline中添加参数--configservice --adminservice
+   再启动portal
 # License
 The project is licensed under the [Apache 2 license](https://github.com/ctripcorp/apollo/blob/master/LICENSE).
 

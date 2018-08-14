@@ -10,7 +10,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "Audit")
+@Table(name = "Audit_")
 @SQLDelete(sql = "Update Audit set isDeleted = 1 where id = ?")
 @Where(clause = "isDeleted = 0")
 public class Audit extends BaseEntity {
@@ -28,7 +28,7 @@ public class Audit extends BaseEntity {
   @Column(name = "OpName", nullable = false)
   private String opName;
 
-  @Column(name = "Comment")
+  @Column(name = "Comment_")
   private String comment;
 
   public String getComment() {

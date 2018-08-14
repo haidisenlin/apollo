@@ -20,7 +20,7 @@ public class UserRole extends BaseEntity {
   @Column(name = "UserId", nullable = false)
   private String userId;
 
-  @Column(name = "RoleId", nullable = false)
+  @Column(name = "RoleId", nullable = false )
   private long roleId;
 
   public String getUserId() {

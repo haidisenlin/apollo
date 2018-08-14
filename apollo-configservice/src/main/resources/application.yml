@@ -4,9 +4,9 @@ spring:
   profiles:
     active: ${apollo_profile}
   datasource:
-    url: jdbc:mysql://192.168.37.85:3306/ApolloConfigDB?characterEncoding=utf8
-    username: root
-    password: root
+    url: jdbc:oracle:thin:@localhost:1521:orcl
+    username: apolloconfig
+    password: 123456
 ctrip:
   appid: 100003171
   

@@ -37,7 +37,7 @@ public class Release extends BaseEntity {
   @Lob
   private String configurations;
 
-  @Column(name = "Comment", nullable = false)
+  @Column(name = "Comment_", nullable = false)
   private String comment;
 
   @Column(name = "IsAbandoned", columnDefinition = "Bit default '0'")

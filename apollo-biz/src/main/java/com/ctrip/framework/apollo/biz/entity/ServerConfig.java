@@ -20,13 +20,13 @@ public class ServerConfig extends BaseEntity {
   @Column(name = "Key", nullable = false)
   private String key;
 
-  @Column(name = "Cluster", nullable = false)
+  @Column(name = "Cluster_", nullable = false)
   private String cluster;
 
   @Column(name = "Value", nullable = false)
   private String value;
 
-  @Column(name = "Comment", nullable = false)
+  @Column(name = "Comment_", nullable = false)
   private String comment;
 
   public String getKey() {

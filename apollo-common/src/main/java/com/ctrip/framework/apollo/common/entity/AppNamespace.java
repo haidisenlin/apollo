@@ -28,7 +28,7 @@ public class AppNamespace extends BaseEntity {
   @Column(name = "IsPublic", columnDefinition = "Bit default '0'")
   private boolean isPublic = false;
 
-  @Column(name = "Comment")
+  @Column(name = "Comment_")
   private String comment;
 
   public String getAppId() {

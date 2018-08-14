@@ -13,7 +13,7 @@ import javax.persistence.Table;
  * @author Jason Song(song_s@ctrip.com)
  */
 @Entity
-@Table(name = "Cluster")
+@Table(name = "Cluster_")
 @SQLDelete(sql = "Update Cluster set isDeleted = 1 where id = ?")
 @Where(clause = "isDeleted = 0")
 public class Cluster extends BaseEntity implements Comparable<Cluster> {

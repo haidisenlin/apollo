@@ -29,7 +29,7 @@ public class Commit extends BaseEntity {
   @Column(name = "NamespaceName", nullable = false)
   private String namespaceName;
 
-  @Column(name = "Comment")
+  @Column(name = "Comment_")
   private String comment;
 
   public String getChangeSets() {

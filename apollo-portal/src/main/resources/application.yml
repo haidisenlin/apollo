@@ -6,9 +6,9 @@ spring:
   resources:
     cache-period: 3600
   datasource:
-    url: jdbc:mysql://192.168.37.85:3306/ApolloPortalDB?characterEncoding=utf8
-    username: root
-    password: root
+    url: jdbc:oracle:thin:@localhost:1521:orcl
+    username: apollo
+    password: 123456
 
 server:
   port: 8070
