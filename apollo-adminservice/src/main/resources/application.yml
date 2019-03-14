@@ -1,12 +1,14 @@
 spring:
   application:
-    name: apollo-adminservice
+    name: apolloAdminservice
   profiles:
     active: ${apollo_profile}
   datasource:
     url: jdbc:oracle:thin:@localhost:1521:orcl
     username: apolloconfig
     password: 123456
+  jpa:
+    show-sql: true
 
 ctrip:
   appid: 100003172
