@@ -14,9 +14,7 @@ server:
   port: 8070
   
 logging:
-  level:
-    com.ctrip: debug
-  ##file: /opt/logs/100003173/apollo-portal.log
+  file: /opt/logs/100003173/apollo-portal.log
 
 endpoints:
   health:
