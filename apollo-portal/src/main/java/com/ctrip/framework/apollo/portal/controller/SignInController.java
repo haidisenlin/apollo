@@ -5,6 +5,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+
 /**
  * @author lepdou 2017-08-30
  */
@@ -16,5 +21,4 @@ public class SignInController {
                       @RequestParam(value = "logout", required = false) String logout) {
     return "login.html";
   }
-
 }

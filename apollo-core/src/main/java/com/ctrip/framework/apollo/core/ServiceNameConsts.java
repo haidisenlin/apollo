@@ -6,7 +6,7 @@ public interface ServiceNameConsts {
 
   String APOLLO_CONFIGSERVICE = "apollo-configservice";
 
-  String APOLLO_ADMINSERVICE = "apollo-adminservice";
+  String APOLLO_ADMINSERVICE = "apolloAdminservice";
 
   String APOLLO_PORTAL = "apollo-portal";
 }

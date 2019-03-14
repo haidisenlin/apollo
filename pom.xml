@@ -685,7 +685,7 @@
 			</dependencyManagement>
 			<dependencies>
 				<dependency>
-					<groupId>com.ctrip.3rdparty.tomcat.embed</groupId>
+					<groupId>org.apache.tomcat.embed</groupId>
 					<artifactId>tomcat-embed-core</artifactId>
 				</dependency>
 			</dependencies>
@@ -795,7 +795,7 @@
 					<artifactId>cat-client</artifactId>
 				</dependency>
 				<dependency>
-					<groupId>com.ctrip.3rdparty.tomcat.embed</groupId>
+					<groupId>org.apache.tomcat.embed</groupId>
 					<artifactId>tomcat-embed-core</artifactId>
 				</dependency>
 				<dependency>

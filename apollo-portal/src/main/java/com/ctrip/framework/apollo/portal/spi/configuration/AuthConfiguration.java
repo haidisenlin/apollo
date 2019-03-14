@@ -1,5 +1,8 @@
 package com.ctrip.framework.apollo.portal.spi.configuration;
 
+import com.ctrip.framework.apollo.portal.spi.cas.CasLogoutHandler;
+import com.ctrip.framework.apollo.portal.spi.cas.CasUserInfoHolder;
+import com.ctrip.framework.apollo.portal.spi.cas.CasUserService;
 import com.google.common.collect.Maps;
 
 import com.ctrip.framework.apollo.common.condition.ConditionalOnMissingProfile;
@@ -45,260 +48,394 @@ import java.util.Map;
 @Configuration
 public class AuthConfiguration {
 
-  /**
-   * spring.profiles.active = ctrip
-   */
-  @Configuration
-  @Profile("ctrip")
-  static class CtripAuthAutoConfiguration {
+    /**
+     * spring.profiles.active = ctrip
+     */
+    @Configuration
+    @Profile("ctrip")
+    static class CtripAuthAutoConfiguration {
 
-    @Autowired
-    private PortalConfig portalConfig;
+        @Autowired
+        private PortalConfig portalConfig;
 
-    @Bean
-    public ServletListenerRegistrationBean redisAppSettingListner() {
-      ServletListenerRegistrationBean redisAppSettingListener = new ServletListenerRegistrationBean();
-      redisAppSettingListener.setListener(listener("org.jasig.cas.client.credis.CRedisAppSettingListner"));
-      return redisAppSettingListener;
+        @Bean
+        public ServletListenerRegistrationBean redisAppSettingListner() {
+            ServletListenerRegistrationBean redisAppSettingListener = new ServletListenerRegistrationBean();
+            redisAppSettingListener.setListener(listener("org.jasig.cas.client.credis.CRedisAppSettingListner"));
+            return redisAppSettingListener;
+        }
+
+        @Bean
+        public ServletListenerRegistrationBean singleSignOutHttpSessionListener() {
+            ServletListenerRegistrationBean singleSignOutHttpSessionListener = new ServletListenerRegistrationBean();
+            singleSignOutHttpSessionListener
+                    .setListener(listener("org.jasig.cas.client.session.SingleSignOutHttpSessionListener"));
+            return singleSignOutHttpSessionListener;
+        }
+
+        @Bean
+        public FilterRegistrationBean casFilter() {
+            FilterRegistrationBean singleSignOutFilter = new FilterRegistrationBean();
+            singleSignOutFilter.setFilter(filter("org.jasig.cas.client.session.SingleSignOutFilter"));
+            singleSignOutFilter.addUrlPatterns("/*");
+            singleSignOutFilter.setOrder(1);
+            return singleSignOutFilter;
+        }
+
+        @Bean
+        public FilterRegistrationBean authenticationFilter() {
+            FilterRegistrationBean casFilter = new FilterRegistrationBean();
+
+            Map<String, String> filterInitParam = Maps.newHashMap();
+            filterInitParam.put("redisClusterName", "casClientPrincipal");
+            filterInitParam.put("serverName", portalConfig.portalServerName());
+            filterInitParam.put("casServerLoginUrl", portalConfig.casServerLoginUrl());
+            //we don't want to use session to store login information, since we will be deployed to a cluster, not a single instance
+            filterInitParam.put("useSession", "false");
+            filterInitParam.put("/openapi.*", "exclude");
+
+            casFilter.setInitParameters(filterInitParam);
+            casFilter.setFilter(filter("com.ctrip.framework.apollo.sso.filter.ApolloAuthenticationFilter"));
+            casFilter.addUrlPatterns("/*");
+            casFilter.setOrder(2);
+
+            return casFilter;
+        }
+
+        @Bean
+        public FilterRegistrationBean casValidationFilter() {
+            FilterRegistrationBean casValidationFilter = new FilterRegistrationBean();
+            Map<String, String> filterInitParam = Maps.newHashMap();
+            filterInitParam.put("casServerUrlPrefix", portalConfig.casServerUrlPrefix());
+            filterInitParam.put("serverName", portalConfig.portalServerName());
+            filterInitParam.put("encoding", "UTF-8");
+            //we don't want to use session to store login information, since we will be deployed to a cluster, not a single instance
+            filterInitParam.put("useSession", "false");
+            filterInitParam.put("useRedis", "true");
+            filterInitParam.put("redisClusterName", "casClientPrincipal");
+
+            casValidationFilter
+                    .setFilter(filter("org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter"));
+            casValidationFilter.setInitParameters(filterInitParam);
+            casValidationFilter.addUrlPatterns("/*");
+            casValidationFilter.setOrder(3);
+
+            return casValidationFilter;
+
+        }
+
+
+        @Bean
+        public FilterRegistrationBean assertionHolder() {
+            FilterRegistrationBean assertionHolderFilter = new FilterRegistrationBean();
+
+            Map<String, String> filterInitParam = Maps.newHashMap();
+            filterInitParam.put("/openapi.*", "exclude");
+
+            assertionHolderFilter.setInitParameters(filterInitParam);
+
+            assertionHolderFilter.setFilter(filter("com.ctrip.framework.apollo.sso.filter.ApolloAssertionThreadLocalFilter"));
+            assertionHolderFilter.addUrlPatterns("/*");
+            assertionHolderFilter.setOrder(4);
+
+            return assertionHolderFilter;
+        }
+
+        @Bean
+        public CtripUserInfoHolder ctripUserInfoHolder() {
+            return new CtripUserInfoHolder();
+        }
+
+        @Bean
+        public CtripLogoutHandler logoutHandler() {
+            return new CtripLogoutHandler();
+        }
+
+        private Filter filter(String className) {
+            Class clazz = null;
+            try {
+                clazz = Class.forName(className);
+                Object obj = clazz.newInstance();
+                return (Filter) obj;
+            } catch (Exception e) {
+                throw new RuntimeException("instance filter fail", e);
+            }
+
+        }
+
+        private EventListener listener(String className) {
+            Class clazz = null;
+            try {
+                clazz = Class.forName(className);
+                Object obj = clazz.newInstance();
+                return (EventListener) obj;
+            } catch (Exception e) {
+                throw new RuntimeException("instance listener fail", e);
+            }
+        }
+
+        @Bean
+        public UserService ctripUserService(PortalConfig portalConfig) {
+            return new CtripUserService(portalConfig);
+        }
+
+        @Bean
+        public SsoHeartbeatHandler ctripSsoHeartbeatHandler() {
+            return new CtripSsoHeartbeatHandler();
+        }
+
     }
 
-    @Bean
-    public ServletListenerRegistrationBean singleSignOutHttpSessionListener() {
-      ServletListenerRegistrationBean singleSignOutHttpSessionListener = new ServletListenerRegistrationBean();
-      singleSignOutHttpSessionListener
-          .setListener(listener("org.jasig.cas.client.session.SingleSignOutHttpSessionListener"));
-      return singleSignOutHttpSessionListener;
-    }
 
-    @Bean
-    public FilterRegistrationBean casFilter() {
-      FilterRegistrationBean singleSignOutFilter = new FilterRegistrationBean();
-      singleSignOutFilter.setFilter(filter("org.jasig.cas.client.session.SingleSignOutFilter"));
-      singleSignOutFilter.addUrlPatterns("/*");
-      singleSignOutFilter.setOrder(1);
-      return singleSignOutFilter;
-    }
+    /**
+     * spring.profiles.active = auth
+     */
+    @Configuration
+    @Profile("auth")
+    static class SpringSecurityAuthAutoConfiguration {
 
-    @Bean
-    public FilterRegistrationBean authenticationFilter() {
-      FilterRegistrationBean casFilter = new FilterRegistrationBean();
+        @Bean
+        @ConditionalOnMissingBean(SsoHeartbeatHandler.class)
+        public SsoHeartbeatHandler defaultSsoHeartbeatHandler() {
+            return new DefaultSsoHeartbeatHandler();
+        }
 
-      Map<String, String> filterInitParam = Maps.newHashMap();
-      filterInitParam.put("redisClusterName", "casClientPrincipal");
-      filterInitParam.put("serverName", portalConfig.portalServerName());
-      filterInitParam.put("casServerLoginUrl", portalConfig.casServerLoginUrl());
-      //we don't want to use session to store login information, since we will be deployed to a cluster, not a single instance
-      filterInitParam.put("useSession", "false");
-      filterInitParam.put("/openapi.*", "exclude");
+        @Bean
+        @ConditionalOnMissingBean(UserInfoHolder.class)
+        public UserInfoHolder springSecurityUserInfoHolder() {
+            return new SpringSecurityUserInfoHolder();
+        }
 
-      casFilter.setInitParameters(filterInitParam);
-      casFilter.setFilter(filter("com.ctrip.framework.apollo.sso.filter.ApolloAuthenticationFilter"));
-      casFilter.addUrlPatterns("/*");
-      casFilter.setOrder(2);
+        @Bean
+        @ConditionalOnMissingBean(LogoutHandler.class)
+        public LogoutHandler logoutHandler() {
+            return new DefaultLogoutHandler();
+        }
 
-      return casFilter;
-    }
+        @Bean
+        public JdbcUserDetailsManager jdbcUserDetailsManager(AuthenticationManagerBuilder auth, DataSource datasource) throws Exception {
+            JdbcUserDetailsManager jdbcUserDetailsManager = auth.jdbcAuthentication().passwordEncoder(new BCryptPasswordEncoder()).dataSource(datasource)
+                    .usersByUsernameQuery("select Username,Password,Enabled from Users where Username = ?")
+                    .authoritiesByUsernameQuery("select Username,Authority from Authorities where Username = ?")
+                    .getUserDetailsService();
 
-    @Bean
-    public FilterRegistrationBean casValidationFilter() {
-      FilterRegistrationBean casValidationFilter = new FilterRegistrationBean();
-      Map<String, String> filterInitParam = Maps.newHashMap();
-      filterInitParam.put("casServerUrlPrefix", portalConfig.casServerUrlPrefix());
-      filterInitParam.put("serverName", portalConfig.portalServerName());
-      filterInitParam.put("encoding", "UTF-8");
-      //we don't want to use session to store login information, since we will be deployed to a cluster, not a single instance
-      filterInitParam.put("useSession", "false");
-      filterInitParam.put("useRedis", "true");
-      filterInitParam.put("redisClusterName", "casClientPrincipal");
+            jdbcUserDetailsManager.setUserExistsSql("select Username from `Users` where Username = ?");
+            jdbcUserDetailsManager.setCreateUserSql("insert into `Users` (Username, Password, Enabled) values (?,?,?)");
+            jdbcUserDetailsManager.setUpdateUserSql("update `Users` set Password = ?, Enabled = ? where Username = ?");
+            jdbcUserDetailsManager.setDeleteUserSql("delete from `Users` where Username = ?");
+            jdbcUserDetailsManager.setCreateAuthoritySql("insert into `Authorities` (Username, Authority) values (?,?)");
+            jdbcUserDetailsManager.setDeleteUserAuthoritiesSql("delete from `Authorities` where Username = ?");
+            jdbcUserDetailsManager.setChangePasswordSql("update `Users` set Password = ? where Username = ?");
 
-      casValidationFilter
-          .setFilter(filter("org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter"));
-      casValidationFilter.setInitParameters(filterInitParam);
-      casValidationFilter.addUrlPatterns("/*");
-      casValidationFilter.setOrder(3);
+            return jdbcUserDetailsManager;
+        }
 
-      return casValidationFilter;
+        @Bean
+        @ConditionalOnMissingBean(UserService.class)
+        public UserService springSecurityUserService() {
+            return new SpringSecurityUserService();
+        }
 
     }
 
+    @Order(99)
+    @Profile("auth")
+    @Configuration
+    @EnableWebSecurity
+    @EnableGlobalMethodSecurity(prePostEnabled = true)
+    static class SpringSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
-    @Bean
-    public FilterRegistrationBean assertionHolder() {
-      FilterRegistrationBean assertionHolderFilter = new FilterRegistrationBean();
+        public static final String USER_ROLE = "user";
 
-      Map<String, String> filterInitParam = Maps.newHashMap();
-      filterInitParam.put("/openapi.*", "exclude");
-
-      assertionHolderFilter.setInitParameters(filterInitParam);
-
-      assertionHolderFilter.setFilter(filter("com.ctrip.framework.apollo.sso.filter.ApolloAssertionThreadLocalFilter"));
-      assertionHolderFilter.addUrlPatterns("/*");
-      assertionHolderFilter.setOrder(4);
-
-      return assertionHolderFilter;
-    }
-
-    @Bean
-    public CtripUserInfoHolder ctripUserInfoHolder() {
-      return new CtripUserInfoHolder();
-    }
-
-    @Bean
-    public CtripLogoutHandler logoutHandler() {
-      return new CtripLogoutHandler();
-    }
-
-    private Filter filter(String className) {
-      Class clazz = null;
-      try {
-        clazz = Class.forName(className);
-        Object obj = clazz.newInstance();
-        return (Filter) obj;
-      } catch (Exception e) {
-        throw new RuntimeException("instance filter fail", e);
-      }
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http.csrf().disable();
+            http.headers().frameOptions().sameOrigin();
+            http.authorizeRequests().antMatchers("/openapi/**", "/vendor/**", "/styles/**", "/scripts/**", "/views/**", "/img/**").permitAll()
+                    .antMatchers("/**").hasAnyRole(USER_ROLE);
+            http.formLogin().loginPage("/signin").permitAll().failureUrl("/signin?#/error").and().httpBasic();
+            http.logout().invalidateHttpSession(true).clearAuthentication(true).logoutSuccessUrl("/signin?#/logout");
+            http.exceptionHandling().authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/signin"));
+        }
 
     }
 
-    private EventListener listener(String className) {
-      Class clazz = null;
-      try {
-        clazz = Class.forName(className);
-        Object obj = clazz.newInstance();
-        return (EventListener) obj;
-      } catch (Exception e) {
-        throw new RuntimeException("instance listener fail", e);
-      }
+
+    //Cas单点登陆配置
+    @Configuration
+    @Profile("cas")
+    static class CasAuthAutoConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean(LogoutHandler.class)
+        public CasLogoutHandler logoutHandler() {
+            return new CasLogoutHandler();
+        }
+
+        @Bean
+        public ServletListenerRegistrationBean singleSignOutHttpSessionListener() {
+            ServletListenerRegistrationBean singleSignOutHttpSessionListener = new ServletListenerRegistrationBean();
+            singleSignOutHttpSessionListener.setListener(listener("org.jasig.cas.client.session.SingleSignOutHttpSessionListener"));
+            return singleSignOutHttpSessionListener;
+        }
+
+        //第一步：filter拦截所有请求，检查是否已经登录
+        @Bean
+        public FilterRegistrationBean casFilter() {
+            FilterRegistrationBean singleSignOutFilter = new FilterRegistrationBean();
+            singleSignOutFilter.setFilter(filter("org.jasig.cas.client.session.SingleSignOutFilter"));
+            singleSignOutFilter.addUrlPatterns("/*");
+            singleSignOutFilter.setOrder(1);
+            return singleSignOutFilter;
+        }
+
+        //第二步：重定向到CAS服务器端进行认证
+        @Bean
+        public FilterRegistrationBean authenticationFilter() {
+            FilterRegistrationBean casFilter = new FilterRegistrationBean();
+            Map<String, String> filterInitParam = Maps.newHashMap();
+            filterInitParam.put("serverName", "http://127.0.0.1:8070");
+            filterInitParam.put("casServerLoginUrl", "http://sso.sunnyoptical.cn/login");
+            filterInitParam.put("/openapi.*", "exclude");
+            casFilter.setInitParameters(filterInitParam);
+            casFilter.setFilter(filter("org.jasig.cas.client.authentication.AuthenticationFilter"));
+            casFilter.addUrlPatterns("/*");
+            casFilter.setOrder(2);
+            return casFilter;
+        }
+
+        //第三步：检验CAS票据参数
+        @Bean
+        public FilterRegistrationBean casValidationFilter() {
+            FilterRegistrationBean casValidationFilter = new FilterRegistrationBean();
+            Map<String, String> filterInitParam = Maps.newHashMap();
+            filterInitParam.put("casServerUrlPrefix", "http://sso.sunnyoptical.cn");
+            filterInitParam.put("serverName", "http://127.0.0.1:8070");
+            filterInitParam.put("encoding", "UTF-8");
+
+            casValidationFilter.setFilter(filter("org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter"));
+            casValidationFilter.setInitParameters(filterInitParam);
+            casValidationFilter.addUrlPatterns("/*");
+            casValidationFilter.setOrder(3);
+
+            return casValidationFilter;
+
+        }
+
+        //第四步：
+        @Bean
+        public FilterRegistrationBean httpServletRequestFilter() {
+            FilterRegistrationBean httpServletRequestFilter = new FilterRegistrationBean();
+            Map<String, String> filterInitParam = Maps.newHashMap();
+            filterInitParam.put("/openapi.*", "exclude");
+
+            httpServletRequestFilter.setFilter(filter("org.jasig.cas.client.util.HttpServletRequestWrapperFilter"));
+            httpServletRequestFilter.setInitParameters(filterInitParam);
+            httpServletRequestFilter.addUrlPatterns("/*");
+            httpServletRequestFilter.setOrder(4);
+
+            return httpServletRequestFilter;
+
+        }
+
+        //第五步：
+        @Bean
+        public FilterRegistrationBean assertionHolder() {
+            FilterRegistrationBean assertionHolderFilter = new FilterRegistrationBean();
+
+            Map<String, String> filterInitParam = Maps.newHashMap();
+            filterInitParam.put("/openapi.*", "exclude");
+
+            assertionHolderFilter.setInitParameters(filterInitParam);
+            assertionHolderFilter.setFilter(filter("org.jasig.cas.client.util.AssertionThreadLocalFilter"));
+            assertionHolderFilter.addUrlPatterns("/*");
+            assertionHolderFilter.setOrder(5);
+
+            return assertionHolderFilter;
+        }
+
+
+
+        private Filter filter(String className) {
+            Class clazz = null;
+            try {
+                clazz = Class.forName(className);
+                Object obj = clazz.newInstance();
+                return (Filter) obj;
+            } catch (Exception e) {
+                throw new RuntimeException("instance filter fail", e);
+            }
+        }
+        private EventListener listener(String className) {
+            Class clazz = null;
+            try {
+                clazz = Class.forName(className);
+                Object obj = clazz.newInstance();
+                return (EventListener) obj;
+            } catch (Exception e) {
+                throw new RuntimeException("instance listener fail", e);
+            }
+        }
+
+
+        @Bean
+        public CasUserInfoHolder casUserInfoHolder() {
+            return new CasUserInfoHolder();
+        }
+        @Bean
+        public UserService casUserService() {
+            return new CasUserService();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(SsoHeartbeatHandler.class)
+        public SsoHeartbeatHandler defaultSsoHeartbeatHandler() {
+            return new DefaultSsoHeartbeatHandler();
+        }
     }
 
-    @Bean
-    public UserService ctripUserService(PortalConfig portalConfig) {
-      return new CtripUserService(portalConfig);
+    /**
+     * default profile
+     */
+    @Configuration
+    @ConditionalOnMissingProfile({"ctrip", "auth", "cas"})
+    static class DefaultAuthAutoConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean(SsoHeartbeatHandler.class)
+        public SsoHeartbeatHandler defaultSsoHeartbeatHandler() {
+            return new DefaultSsoHeartbeatHandler();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(UserInfoHolder.class)
+        public DefaultUserInfoHolder defaultUserInfoHolder() {
+            return new DefaultUserInfoHolder();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(LogoutHandler.class)
+        public DefaultLogoutHandler logoutHandler() {
+            return new DefaultLogoutHandler();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(UserService.class)
+        public UserService defaultUserService() {
+            return new DefaultUserService();
+        }
     }
 
-    @Bean
-    public SsoHeartbeatHandler ctripSsoHeartbeatHandler() {
-      return new CtripSsoHeartbeatHandler();
+    @ConditionalOnMissingProfile({"auth"})
+    @Configuration
+    @EnableWebSecurity
+    @EnableGlobalMethodSecurity(prePostEnabled = true)
+    static class DefaultWebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http.csrf().disable();
+            http.headers().frameOptions().sameOrigin();
+        }
     }
-
-  }
-
-
-  /**
-   * spring.profiles.active = auth
-   */
-  @Configuration
-  @Profile("auth")
-  static class SpringSecurityAuthAutoConfiguration {
-
-    @Bean
-    @ConditionalOnMissingBean(SsoHeartbeatHandler.class)
-    public SsoHeartbeatHandler defaultSsoHeartbeatHandler() {
-      return new DefaultSsoHeartbeatHandler();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(UserInfoHolder.class)
-    public UserInfoHolder springSecurityUserInfoHolder() {
-      return new SpringSecurityUserInfoHolder();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(LogoutHandler.class)
-    public LogoutHandler logoutHandler() {
-      return new DefaultLogoutHandler();
-    }
-
-    @Bean
-    public JdbcUserDetailsManager jdbcUserDetailsManager(AuthenticationManagerBuilder auth, DataSource datasource) throws Exception {
-      JdbcUserDetailsManager jdbcUserDetailsManager = auth.jdbcAuthentication().passwordEncoder(new BCryptPasswordEncoder()).dataSource(datasource)
-          .usersByUsernameQuery("select Username,Password,Enabled from `Users` where Username = ?")
-          .authoritiesByUsernameQuery("select Username,Authority from `Authorities` where Username = ?")
-          .getUserDetailsService();
-
-      jdbcUserDetailsManager.setUserExistsSql("select Username from `Users` where Username = ?");
-      jdbcUserDetailsManager.setCreateUserSql("insert into `Users` (Username, Password, Enabled) values (?,?,?)");
-      jdbcUserDetailsManager.setUpdateUserSql("update `Users` set Password = ?, Enabled = ? where Username = ?");
-      jdbcUserDetailsManager.setDeleteUserSql("delete from `Users` where Username = ?");
-      jdbcUserDetailsManager.setCreateAuthoritySql("insert into `Authorities` (Username, Authority) values (?,?)");
-      jdbcUserDetailsManager.setDeleteUserAuthoritiesSql("delete from `Authorities` where Username = ?");
-      jdbcUserDetailsManager.setChangePasswordSql("update `Users` set Password = ? where Username = ?");
-
-      return jdbcUserDetailsManager;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(UserService.class)
-    public UserService springSecurityUserService() {
-      return new SpringSecurityUserService();
-    }
-
-  }
-
-  @Order(99)
-  @Profile("auth")
-  @Configuration
-  @EnableWebSecurity
-  @EnableGlobalMethodSecurity(prePostEnabled = true)
-  static class SpringSecurityConfigurer extends WebSecurityConfigurerAdapter {
-
-    public static final String USER_ROLE = "user";
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-      http.csrf().disable();
-      http.headers().frameOptions().sameOrigin();
-      http.authorizeRequests().antMatchers("/openapi/**", "/vendor/**", "/styles/**", "/scripts/**", "/views/**", "/img/**").permitAll()
-      .antMatchers("/**").hasAnyRole(USER_ROLE);
-      http.formLogin().loginPage("/signin").permitAll().failureUrl("/signin?#/error").and().httpBasic();
-      http.logout().invalidateHttpSession(true).clearAuthentication(true).logoutSuccessUrl("/signin?#/logout");
-      http.exceptionHandling().authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/signin"));
-    }
-
-  }
-
-  /**
-   * default profile
-   */
-  @Configuration
-  @ConditionalOnMissingProfile({"ctrip", "auth"})
-  static class DefaultAuthAutoConfiguration {
-
-    @Bean
-    @ConditionalOnMissingBean(SsoHeartbeatHandler.class)
-    public SsoHeartbeatHandler defaultSsoHeartbeatHandler() {
-      return new DefaultSsoHeartbeatHandler();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(UserInfoHolder.class)
-    public DefaultUserInfoHolder defaultUserInfoHolder() {
-      return new DefaultUserInfoHolder();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(LogoutHandler.class)
-    public DefaultLogoutHandler logoutHandler() {
-      return new DefaultLogoutHandler();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(UserService.class)
-    public UserService defaultUserService() {
-      return new DefaultUserService();
-    }
-  }
-
-  @ConditionalOnMissingProfile("auth")
-  @Configuration
-  @EnableWebSecurity
-  @EnableGlobalMethodSecurity(prePostEnabled = true)
-  static class DefaultWebSecurityConfig extends WebSecurityConfigurerAdapter {
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-      http.csrf().disable();
-      http.headers().frameOptions().sameOrigin();
-    }
-  }
 }
