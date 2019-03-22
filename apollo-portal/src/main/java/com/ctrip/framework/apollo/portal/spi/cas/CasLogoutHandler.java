@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Date;
 
 public class CasLogoutHandler implements LogoutHandler {
     @Override
@@ -19,7 +20,7 @@ public class CasLogoutHandler implements LogoutHandler {
 
         //重定向到Cas的logout地址
         String casServerUrl = "http://sso.sunnyoptical.cn";
-        String serverName = "http://127.0.0.1:8070/";
+        String serverName = "http://127.0.0.1:8070/?"+new Date();
 
         try {
             response.sendRedirect(casServerUrl + "/logout?service=" + serverName);

@@ -5,6 +5,7 @@ import com.ctrip.framework.apollo.portal.entity.bo.UserInfo;
 import com.ctrip.framework.apollo.portal.entity.po.UserPO;
 import com.ctrip.framework.apollo.portal.repository.UserRepository;
 import com.ctrip.framework.apollo.portal.spi.UserService;
+import com.ctrip.framework.apollo.portal.spi.springsecurity.SpringSecurityUserService;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -12,7 +13,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CasUserService implements UserService {
+public class CasUserService extends SpringSecurityUserService implements UserService {
     @Autowired
     private UserRepository userRepository;
     @Override
