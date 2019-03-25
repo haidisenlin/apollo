@@ -34,6 +34,5 @@ var open_manage_module = angular.module('open_manage', ['app.service', 'apollo.d
 var user_module = angular.module('user', ['apollo.directive', 'toastr', 'app.service', 'app.util', 'angular-loading-bar', 'valdr']);
 //login
 var login_module = angular.module('login', ['toastr', 'app.util']);
-
-
-
+//user_list
+var user_list_module= angular.module('user_list', ['apollo.directive', 'toastr', 'app.service', 'app.util', 'angular-loading-bar', 'valdr']);
