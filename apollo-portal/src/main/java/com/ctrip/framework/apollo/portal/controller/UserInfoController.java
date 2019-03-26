@@ -11,6 +11,7 @@ import com.ctrip.framework.apollo.portal.spi.UserService;
 import com.ctrip.framework.apollo.portal.spi.springsecurity.SpringSecurityUserService;
 
 import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.google.common.base.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,14 +46,17 @@ public class UserInfoController {
 
 
     @PreAuthorize(value = "@permissionValidator.isSuperAdmin()")
-    @RequestMapping(value = "/users", method = RequestMethod.POST)
-    public void createOrUpdateUser(@RequestBody UserPO user) {
+    @RequestMapping(value = "/users/{tableViewOperType}", method = RequestMethod.POST)
+    public void createOrUpdateUser(@RequestBody UserPO user,@PathVariable String tableViewOperType) {
+        if(Strings.isNullOrEmpty(tableViewOperType)){
+            throw new UnsupportedOperationException("未知操作（无法预知您是添加还是更新操作），请通过正常途径操作");
+        }
         if (StringUtils.isContainEmpty(user.getUsername(), user.getPassword())) {
             throw new BadRequestException("Username and password can not be empty.");
         }
 
         if (userService instanceof SpringSecurityUserService) {
-            ((SpringSecurityUserService) userService).createOrUpdate(user);
+            ((SpringSecurityUserService) userService).createOrUpdate(user,tableViewOperType);
         } else {
             throw new UnsupportedOperationException("Create or update user operation is unsupported");
         }
@@ -83,8 +87,21 @@ public class UserInfoController {
 
 
     @RequestMapping(value = "/user/delete/{userId}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
-        return ResponseEntity.ok().build();
+    public void deleteUser(@PathVariable String userId) {
+        try{
+            ((SpringSecurityUserService) userService).delete(userId);
+        }catch (Exception e){
+            throw e;
+        }
+    }
+
+    @RequestMapping(value = "/user/enabled/{userId}/{state}", method = RequestMethod.DELETE)
+    public void enabledUser(@PathVariable String userId,@PathVariable int state) {
+        try{
+            ((SpringSecurityUserService) userService).enabled(userId,state);
+        }catch (Exception e){
+            throw e;
+        }
     }
 
     @RequestMapping(value = "/user/totalPage", method = RequestMethod.GET)

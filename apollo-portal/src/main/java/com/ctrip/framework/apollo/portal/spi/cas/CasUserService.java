@@ -20,9 +20,9 @@ public class CasUserService extends SpringSecurityUserService implements UserSer
     public List<UserInfo> searchUsers(String keyword, int offset, int limit) {
         List<UserPO> users;
         if (StringUtils.isEmpty(keyword)) {
-            users = userRepository.findFirst20ByEnabled(1);
+            users = userRepository.findFirst20ByOrderByIdAsc();
         } else {
-            users = userRepository.findByUsernameLikeAndEnabled("%" + keyword + "%", 1);
+            users = userRepository.findByUsernameLike("%" + keyword + "%");
         }
 
         List<UserInfo> result = Lists.newArrayList();

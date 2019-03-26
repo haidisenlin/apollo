@@ -11,7 +11,7 @@ appService.service('UserService', ['$resource', '$q', function ($resource, $q) {
         },
         create_or_update_user: {
             method: 'POST',
-            url: '/users'
+            url: '/users/:tableViewOperType'
         },
         totalPage: {
             method: 'GET',
@@ -20,6 +20,10 @@ appService.service('UserService', ['$resource', '$q', function ($resource, $q) {
         delete_user:{
             method: 'DELETE',
             url: '/user/delete/:userId'
+        },
+        enabled_users: {
+            method: 'DELETE',
+            url: '/user/enabled/:userId/:state'
         }
     });
     return {
@@ -53,7 +57,7 @@ appService.service('UserService', ['$resource', '$q', function ($resource, $q) {
         },
         createOrUpdateUser: function (user) {
             var d = $q.defer();
-            user_resource.create_or_update_user({}, user,
+            user_resource.create_or_update_user({tableViewOperType: user.tableViewOperType}, user,
                 function (result) {
                     d.resolve(result);
                 },
@@ -61,6 +65,7 @@ appService.service('UserService', ['$resource', '$q', function ($resource, $q) {
                     d.reject(result);
                 });
             return d.promise;
+
         },
         totalPage: function () {
             var d = $q.defer();
@@ -76,6 +81,17 @@ appService.service('UserService', ['$resource', '$q', function ($resource, $q) {
         delete_user:function (userId) {
             var d = $q.defer();
             user_resource.delete_user({ userId: userId},
+                function (result) {
+                    d.resolve(result);
+                },
+                function (result) {
+                    d.reject(result);
+                });
+            return d.promise;
+        },
+        enabled_user:function (userId,state) {
+            var d = $q.defer();
+            user_resource.enabled_users({ userId: userId,state:state==true?1:0},
                 function (result) {
                     d.resolve(result);
                 },

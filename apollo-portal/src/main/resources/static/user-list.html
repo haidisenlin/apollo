@@ -5,6 +5,7 @@
     <link rel="icon" href="./img/config.png">
     <!-- styles -->
     <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap-switch.min.css">
     <link rel="stylesheet" type="text/css" href="vendor/angular/angular-toastr-1.4.1.min.css">
     <link rel="stylesheet" type="text/css" href="vendor/select2/select2.min.css">
     <link rel="stylesheet" type="text/css" media='all' href="vendor/angular/loading-bar.min.css">
@@ -32,6 +33,7 @@
                                 <th>用户名</th>
                                 <th>名称</th>
                                 <th>邮箱</th>
+                                <th>状态</th>
                                 <th>操作</th>
                             </tr>
                             </thead>
@@ -40,6 +42,9 @@
                                 <td ng-bind="item.userId"></td>
                                 <td ng-bind="item.name"></td>
                                 <td ng-bind="item.email"></td>
+                                <td >
+                                    <my-input value="{{item}}" fun = "enabled(toEditItem,state)"></my-input>
+                                </td>
                                 <td width="8%" class="text-center">
                                     <img src="img/edit.png" data-tooltip="tooltip" data-placement="bottom" title="修改"
                                          ng-click="editItem(item)">
@@ -97,6 +102,7 @@
 
 <!-- bootstrap.js -->
 <script src="vendor/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="vendor/bootstrap/js/bootstrap-switch.min.js" type="text/javascript"></script>
 
 <!--valdr-->
 <script src="vendor/valdr/valdr.min.js" type="text/javascript"></script>
@@ -116,6 +122,7 @@
 
 <script type="application/javascript" src="scripts/controller/UserListController.js"></script>
 <script type="application/javascript" src="scripts/directive/user-modal-directive.js"></script>
+<script type="application/javascript" src="scripts/directive/switch-directive.js"></script>
 
 <script src="scripts/valdr.js" type="text/javascript"></script>
 </body>

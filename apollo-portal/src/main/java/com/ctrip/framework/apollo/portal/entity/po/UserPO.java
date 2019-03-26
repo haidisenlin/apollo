@@ -72,6 +72,7 @@ public class UserPO {
     UserInfo userInfo = new UserInfo();
     userInfo.setName(this.getUsername());
     userInfo.setUserId(this.getUsername());
+    userInfo.setEnabled(this.getEnabled());
     userInfo.setEmail(this.getEmail());
     return userInfo;
   }

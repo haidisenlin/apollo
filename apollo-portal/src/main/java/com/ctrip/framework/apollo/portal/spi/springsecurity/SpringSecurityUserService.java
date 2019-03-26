@@ -44,15 +44,21 @@ public class SpringSecurityUserService implements UserService {
   }
 
   @Transactional
-  public void createOrUpdate(UserPO user) {
+  public void createOrUpdate(UserPO user,String tableViewOperType) {
     String username = user.getUsername();
 
     User userDetails = new User(username, encoder.encode(user.getPassword()), authorities);
 
-    if (userDetailsManager.userExists(username)) {
+    if (userDetailsManager.userExists(username)&&tableViewOperType.equals("create")) {
+      throw new UnsupportedOperationException("当前用户已存在,不允许创建");
+    }else if(userDetailsManager.userExists(username)&&tableViewOperType.equals("update")){
       userDetailsManager.updateUser(userDetails);
-    } else {
+    } else if(userDetailsManager.userExists(username)==false&&tableViewOperType.equals("create")) {
       userDetailsManager.createUser(userDetails);
+    }else if(userDetailsManager.userExists(username)==false&&tableViewOperType.equals("update")){
+      throw new UnsupportedOperationException("待修改的用户不存在");
+    }else{
+      throw new UnsupportedOperationException("当前操作异常");
     }
 
     UserPO managedUser = userRepository.findByUsername(username);
@@ -61,6 +67,27 @@ public class SpringSecurityUserService implements UserService {
     userRepository.save(managedUser);
   }
 
+  //删除
+  @Transactional
+  public void delete(String username) {
+    UserPO managedUser = userRepository.findByUsername(username);
+    if(managedUser==null||managedUser.getUsername()==null||managedUser.getUsername().equals("")){
+      throw new UnsupportedOperationException("待删除的用户不存在");
+    }else {
+      userRepository.delete(managedUser.getId());
+    }
+  }
+  //启用禁用
+  @Transactional
+  public void enabled(String username,int state) {
+    UserPO managedUser = userRepository.findByUsername(username);
+    if(managedUser==null||managedUser.getUsername()==null||managedUser.getUsername().equals("")){
+      throw new UnsupportedOperationException("待操作的用户不存在");
+    }else {
+      managedUser.setEnabled(state);
+      userRepository.save(managedUser);
+    }
+  }
   @Override
   public List<UserInfo> searchUsers(String keyword, int offset, int limit) {
     List<UserPO> users;

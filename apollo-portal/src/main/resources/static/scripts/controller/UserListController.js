@@ -1,8 +1,8 @@
 user_list_module.controller('UserListController',
-    ['$scope', '$window', 'toastr', 'AppUtil', 'UserService','EventManager',
-        UserListController]);
+    ['$scope', '$window', 'toastr', 'AppUtil', 'UserService','EventManager','$q',
+        UserListController,]);
 
-function UserListController($scope, $window, toastr, AppUtil, UserService,EventManager) {
+function UserListController($scope, $window, toastr, AppUtil, UserService,EventManager,$q) {
     $scope.createItem = createItem;
     $scope.editItem = editItem;
     $scope.preDeleteItem = preDeleteItem;
@@ -105,7 +105,24 @@ function UserListController($scope, $window, toastr, AppUtil, UserService,EventM
                 toastr.error(AppUtil.errorMsg(result), "删除失败");
             });
     }
-
+    //禁用
+    $scope.enabled = function(toEditItem,state) {
+        var d = $q.defer();
+        UserService.enabled_user(toEditItem.userId,state).then(
+            function (result){
+                if(state){
+                    d.resolve(result);
+                    toastr.success("启用成功!");
+                }else{
+                    d.resolve(result);
+                    toastr.success("禁用成功!");
+                }
+            }, function (result) {
+                d.reject(result);
+                toastr.error(AppUtil.errorMsg(result), "删除失败");
+            });
+        return d.promise
+    }
     EventManager.subscribe(EventManager.EventType.REFRESH_USER_LIST,
         function () {
             getUserList(1);

@@ -5,9 +5,19 @@ public class UserInfo {
   private String userId;
   private String name;
   private String email;
+  private int enabled;
+
 
   public UserInfo() {
 
+  }
+
+  public int getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(int enabled) {
+    this.enabled = enabled;
   }
 
   public UserInfo(String userId) {
