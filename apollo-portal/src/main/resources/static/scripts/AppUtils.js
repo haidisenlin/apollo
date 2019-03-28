@@ -2,7 +2,6 @@ appUtil.service('AppUtil', ['toastr', '$window', '$q', function (toastr, $window
 
     function parseErrorMsg(response) {
         if (response.status == -1) {
-            //$window.location.href = 'http://sso.sunnyoptical.cn?service=http://127.0.0.1:8';
             return "您的登录信息已过期,请刷新页面后重试";
         }
         var msg = "Code:" + response.status;

@@ -24,6 +24,7 @@ import com.ctrip.framework.apollo.portal.spi.springsecurity.SpringSecurityUserSe
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.boot.context.embedded.ServletListenerRegistrationBean;
@@ -293,12 +294,15 @@ public class AuthConfiguration {
             return singleSignOutFilter;
         }
 
+        @Value("${server.name}")
+        private String servername;
         //第二步：重定向到CAS服务器端进行认证
         @Bean
         public FilterRegistrationBean authenticationFilter() {
             FilterRegistrationBean casFilter = new FilterRegistrationBean();
             Map<String, String> filterInitParam = Maps.newHashMap();
-            filterInitParam.put("serverName", "http://127.0.0.1:8070");
+
+            filterInitParam.put("serverName", servername);
             filterInitParam.put("casServerLoginUrl", "http://sso.sunnyoptical.cn/login");
             filterInitParam.put("/openapi.*", "exclude");
             casFilter.setInitParameters(filterInitParam);
@@ -314,7 +318,7 @@ public class AuthConfiguration {
             FilterRegistrationBean casValidationFilter = new FilterRegistrationBean();
             Map<String, String> filterInitParam = Maps.newHashMap();
             filterInitParam.put("casServerUrlPrefix", "http://sso.sunnyoptical.cn");
-            filterInitParam.put("serverName", "http://127.0.0.1:8070");
+            filterInitParam.put("serverName", servername);
             filterInitParam.put("encoding", "UTF-8");
 
             casValidationFilter.setFilter(filter("org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter"));

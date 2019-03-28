@@ -11,6 +11,7 @@ spring:
     password: 123456
 
 server:
+  name: http://127.0.0.1:8070
   port: 8070
   
 logging:
@@ -25,5 +26,6 @@ management:
   health:
     status:
       order: DOWN, OUT_OF_SERVICE, UNKNOWN, UP 
+
 
 
